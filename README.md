@@ -1,53 +1,47 @@
 # Unlock Briefing
 
-macOS 解锁简报：解锁后在屏幕中央弹出今日待办和倒计时；`⌘⇧U` 打开主窗口，可查看、编辑，并用 Git 同步 `content.json`。
+**English** · [中文](README.zh-CN.md)
 
-标准 `.app`，不占 Dock。菜单栏默认有图标，可在设置里关掉。支持开机启动。
+Show today’s todos and key-date countdowns when you unlock your Mac. Press **⌘⇧U** to open a window where you can view, edit, and sync `content.json` over Git.
 
-## 要求
+A standard `.app` — no Dock icon. A menu-bar icon is shown by default and can be turned off in Settings. Launch at login is optional.
 
-- macOS 13+
-- Xcode（本地编译）
-- 系统已安装 `git`（同步使用本机已有凭证：SSH / osxkeychain）
+## Install
 
-## 运行
+1. Download **[UnlockBriefing-0.1.0.zip](https://github.com/uraraneko/unlock-briefing/releases/latest)** and unzip `UnlockBriefing.app`
+2. Move it to **Applications**, then open it
+3. If macOS says the developer cannot be verified: **System Settings → Privacy & Security → Open Anyway**
+4. Open Settings (menu bar or the window), paste your private Git repo URL (the repo should contain `content.json`), and save
 
-```bash
-open UnlockBriefing.xcodeproj
-```
+Requires macOS 13+ and a local `git` with your existing credentials (SSH or osxkeychain).
 
-或：
+Optional: menu bar → **Launch at login**.
 
-```bash
-make open
-```
+## Multi-device Sync (Private Repo)
 
-- 解锁：约 0.8 秒后出现简报 HUD，约 8 秒自动消失；默认每个自然日只弹一次
-- `⌘⇧U`：打开 / 关闭主窗口；打开时后台同步（有改动则 commit，再 `pull --rebase`、`push`）
-- 菜单栏：打开窗口、立即同步、开机启动、设置、退出
+Todos and countdowns live in your private Git repo, not in this public project:
 
-首次使用：在设置里填写 Git 仓库地址（仓内需有 `content.json`）。未配置时主窗口为空，并引导去设置。
+1. Set the repo URL in Settings. The app clones it to `~/Library/Application Support/UnlockBriefing/data/` and reads `content.json`.
+2. Opening the window with **⌘⇧U** runs a background two-way sync (`commit` if dirty, then `git pull --rebase` & `git push`).
+3. If the pull brings new data, the window reloads it.
 
-## 数据
+With no repo URL, the window stays empty and points you to Settings.
 
-| 用途 | 路径 |
-|---|---|
-| 设置 | `~/Library/Application Support/UnlockBriefing/settings.json` |
-| 内容与 Git 工作副本 | `~/Library/Application Support/UnlockBriefing/data/` |
+## Configure
 
-`content.json` 格式：
+Edit in the main window (**Edit**), or change `content.json` in the data repo:
 
 ```json
 {
-  "todos": ["完成报告初稿"],
-  "countdowns": [{ "title": "项目上线", "date": "2026-12-31" }]
+  "todos": ["Draft the report", "Reply to email"],
+  "countdowns": [{ "title": "Launch", "date": "2026-12-31" }]
 }
 ```
 
-倒计时：距离 ≥ 7 天显示「x 周 y 天」，否则「x 天 y 小时」，过期显示「已到期」。没有待办和倒计时时显示「今天暂无特别安排，保持专注。」
+![Unlock briefing shown after Mac unlock](docs/screenshots/unlock-briefing.jpg)
 
-## 测试
+Countdowns: **x weeks y days** when 7+ days remain, otherwise **x days y hours**; past dates show **expired**. If both lists are empty: **Nothing special today — stay focused.**
 
-```bash
-make test
-```
+App settings (repo URL, launch at login, menu-bar icon) are stored at `~/Library/Application Support/UnlockBriefing/settings.json`.
+
+Press **⌘⇧U** to toggle the main window (open if hidden, close if already open).
