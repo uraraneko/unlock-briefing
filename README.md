@@ -38,8 +38,6 @@ Edit in the main window (**Edit**), or change `content.json` in the data repo:
 }
 ```
 
-![Unlock briefing shown after Mac unlock](docs/screenshots/unlock-briefing.jpg)
-
 Countdowns: **x weeks y days** when 7+ days remain, otherwise **x days y hours**; past dates show **expired**. If both lists are empty: **Nothing special today — stay focused.**
 
 App settings (repo URL, launch at login, menu-bar icon) are stored at `~/Library/Application Support/UnlockBriefing/settings.json`.

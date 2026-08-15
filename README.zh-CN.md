@@ -40,8 +40,6 @@
 }
 ```
 
-![Mac 解锁后显示的简报](docs/screenshots/unlock-briefing.jpg)
-
 倒计时：距离 ≥ 7 天显示「x 周 y 天」，否则「x 天 y 小时」，过期显示「已到期」。待办和倒计时都为空时显示「今天暂无特别安排，保持专注。」
 
 应用设置（仓库地址、开机启动、菜单栏图标）在 `~/Library/Application Support/UnlockBriefing/settings.json`。
