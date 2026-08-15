@@ -58,6 +58,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         window?.makeKeyAndOrderFront(nil)
     }
 
+    func close() {
+        window?.orderOut(nil)
+        window = nil
+    }
+
     func windowWillClose(_ notification: Notification) {
         window = nil
     }

@@ -101,6 +101,10 @@ final class AppCoordinator: NSObject, ObservableObject {
         settingsWindow.show()
     }
 
+    func closeSettings() {
+        settingsWindow.close()
+    }
+
     func applyMenuBar() {
         menuBar.apply(visible: settings.showMenuBar)
         menuBar.refresh()

@@ -78,5 +78,6 @@ struct SettingsWindowView: View {
             coordinator.setShowMenuBar(showMenuBar)
         }
         coordinator.saveRepoURL(repoURL)
+        coordinator.closeSettings()
     }
 }
