@@ -8,7 +8,7 @@ A standard `.app` — no Dock icon. A menu-bar icon is shown by default and can 
 
 ## Install
 
-1. Download **[UnlockBriefing-0.1.0.zip](https://github.com/uraraneko/unlock-briefing/releases/latest)** and unzip `UnlockBriefing.app`
+1. Download **[UnlockBriefing-0.1.1.zip](https://github.com/uraraneko/unlock-briefing/releases/latest)** and unzip `UnlockBriefing.app`
 2. Move it to **Applications**, then open it
 3. If macOS says the developer cannot be verified: **System Settings → Privacy & Security → Open Anyway**
 4. Open Settings (menu bar or the window), paste your private Git repo URL (the repo should contain `content.json`), and save

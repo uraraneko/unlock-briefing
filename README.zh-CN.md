@@ -8,7 +8,7 @@
 
 ## 安装
 
-1. 下载 **[UnlockBriefing-0.1.0.zip](https://github.com/uraraneko/unlock-briefing/releases/latest)**，解压得到 `UnlockBriefing.app`
+1. 下载 **[UnlockBriefing-0.1.1.zip](https://github.com/uraraneko/unlock-briefing/releases/latest)**，解压得到 `UnlockBriefing.app`
 2. 拖到「应用程序」后打开
 3. 若提示无法验证开发者：**系统设置 → 隐私与安全性 → 仍要打开**
 4. 打开设置（菜单栏或主窗口），粘贴私有 Git 仓库地址（仓内需有 `content.json`）并保存
