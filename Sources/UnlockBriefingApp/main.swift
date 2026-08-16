@@ -4,6 +4,8 @@ import UnlockBriefingCore
 import AppKit
 import Darwin
 
+ResidencyPolicy.apply()
+
 let app = NSApplication.shared
 AppMenu.install(into: app)
 let delegate = AppDelegate()

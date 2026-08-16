@@ -7,6 +7,10 @@ import Darwin
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let coordinator = AppCoordinator()
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        ResidencyPolicy.apply()
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         AppMenu.install()
@@ -15,18 +19,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        false
+        ResidencyPolicy.terminateAfterLastWindowClosed
     }
 }
 
 enum LaunchProbe {
     static func log() {
+        let process = ProcessInfo.processInfo
         let policy = NSApp.activationPolicy().rawValue
         let lsui = Bundle.main.object(forInfoDictionaryKey: "LSUIElement") ?? "missing"
+        let autoTerm = Bundle.main.object(forInfoDictionaryKey: "NSSupportsAutomaticTermination") ?? "missing"
+        let suddenTerm = Bundle.main.object(forInfoDictionaryKey: "NSSupportsSuddenTermination") ?? "missing"
         let lines = [
             "UnlockBriefing started",
             "activationPolicy=\(policy)",
             "LSUIElement=\(lsui)",
+            "NSSupportsAutomaticTermination=\(autoTerm)",
+            "NSSupportsSuddenTermination=\(suddenTerm)",
+            "automaticTerminationSupportEnabled=\(process.automaticTerminationSupportEnabled)",
         ]
         let blob = lines.joined(separator: "\n") + "\n"
         if let data = blob.data(using: .utf8) {

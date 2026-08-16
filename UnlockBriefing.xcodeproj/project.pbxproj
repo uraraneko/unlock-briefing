@@ -14,6 +14,7 @@
 		A10000000000000000000044 /* ContentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000024 /* ContentStore.swift */; };
 		A10000000000000000000045 /* ProcessRunning.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000025 /* ProcessRunning.swift */; };
 		A10000000000000000000046 /* GitSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* GitSyncService.swift */; };
+		A10000000000000000000056 /* ResidencyPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000036 /* ResidencyPolicy.swift */; };
 		A10000000000000000000053 /* BriefingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000033 /* BriefingSession.swift */; };
 		A10000000000000000000054 /* AppMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000034 /* AppMenu.swift */; };
 		A10000000000000000000055 /* RepoURLPaste.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000035 /* RepoURLPaste.swift */; };
@@ -41,6 +42,7 @@
 		A10000000000000000000024 /* ContentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentStore.swift; sourceTree = "<group>"; };
 		A10000000000000000000025 /* ProcessRunning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessRunning.swift; sourceTree = "<group>"; };
 		A10000000000000000000026 /* GitSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitSyncService.swift; sourceTree = "<group>"; };
+		A10000000000000000000036 /* ResidencyPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResidencyPolicy.swift; sourceTree = "<group>"; };
 		A10000000000000000000033 /* BriefingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BriefingSession.swift; sourceTree = "<group>"; };
 		A10000000000000000000034 /* AppMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMenu.swift; sourceTree = "<group>"; };
 		A10000000000000000000035 /* RepoURLPaste.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepoURLPaste.swift; sourceTree = "<group>"; };
@@ -108,6 +110,7 @@
 				A10000000000000000000024 /* ContentStore.swift */,
 				A10000000000000000000025 /* ProcessRunning.swift */,
 				A10000000000000000000026 /* GitSyncService.swift */,
+				A10000000000000000000036 /* ResidencyPolicy.swift */,
 				A10000000000000000000033 /* BriefingSession.swift */,
 				A10000000000000000000035 /* RepoURLPaste.swift */,
 			);
@@ -216,6 +219,7 @@
 				A10000000000000000000044 /* ContentStore.swift in Sources */,
 				A10000000000000000000045 /* ProcessRunning.swift in Sources */,
 				A10000000000000000000046 /* GitSyncService.swift in Sources */,
+				A10000000000000000000056 /* ResidencyPolicy.swift in Sources */,
 				A10000000000000000000053 /* BriefingSession.swift in Sources */,
 				A10000000000000000000055 /* RepoURLPaste.swift in Sources */,
 				A10000000000000000000054 /* AppMenu.swift in Sources */,
@@ -294,11 +298,14 @@
 				ENABLE_DEBUG_DYLIB = NO;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Unlock Briefing";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_NSSupportsAutomaticTermination = NO;
+				INFOPLIST_KEY_NSSupportsSuddenTermination = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -325,11 +332,14 @@
 				ENABLE_DEBUG_DYLIB = NO;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Unlock Briefing";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_NSSupportsAutomaticTermination = NO;
+				INFOPLIST_KEY_NSSupportsSuddenTermination = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
