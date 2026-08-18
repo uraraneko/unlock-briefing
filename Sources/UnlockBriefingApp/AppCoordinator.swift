@@ -13,6 +13,8 @@ final class AppCoordinator: NSObject, ObservableObject {
     @Published var needsSettingsGuide = true
     @Published var isEditing = false
     @Published var lastError: String?
+    @Published var pendingArchiveUndo: ArchiveUndoSnapshot?
+    @Published var archiveUndoToken = UUID()
 
     let git: GitSyncService
     let paths: AppPaths
@@ -24,6 +26,7 @@ final class AppCoordinator: NSObject, ObservableObject {
     private let mainWindow = MainWindowController()
     private let settingsWindow = SettingsWindowController()
     static let browseReorderSyncDelay: TimeInterval = 3
+    private var archiveUndoExpireWork: DispatchWorkItem?
 
     private let gitQueue = DispatchQueue(label: "com.chenenci.UnlockBriefing.git")
     private var unlockWork: DispatchWorkItem?
@@ -70,6 +73,7 @@ final class AppCoordinator: NSObject, ObservableObject {
 
     func toggleMainWindow() {
         if mainWindow.isVisible {
+            dismissArchiveUndoToast()
             mainWindow.close()
         } else {
             openMainWindow(editing: false)
@@ -77,6 +81,7 @@ final class AppCoordinator: NSObject, ObservableObject {
     }
 
     func openMainWindow(editing: Bool) {
+        dismissArchiveUndoToast()
         reloadContent(triggerSync: false)
         session.document = document
         session.prepareWindow(editing: editing)
@@ -88,6 +93,7 @@ final class AppCoordinator: NSObject, ObservableObject {
     }
 
     func beginEditing() {
+        dismissArchiveUndoToast()
         session.document = document
         session.enterEditFromCurrentDocument()
         publishSession()
@@ -160,6 +166,31 @@ final class AppCoordinator: NSObject, ObservableObject {
         var next = document
         next.todos.move(fromOffsets: source, toOffset: destination)
         persistDocument(next, endEditing: false, sync: .debounced)
+    }
+
+    func archiveTodo(at index: Int) {
+        guard !isEditing, let result = ArchiveTransform.archiveTodo(at: index, in: document) else { return }
+        beginArchiveUndo(result.1)
+        persistDocument(result.0, endEditing: false, sync: .debounced)
+    }
+
+    func archiveCountdown(at index: Int) {
+        guard !isEditing, let result = ArchiveTransform.archiveCountdown(at: index, in: document) else { return }
+        beginArchiveUndo(result.1)
+        persistDocument(result.0, endEditing: false, sync: .debounced)
+    }
+
+    func undoPendingArchive() {
+        guard let snapshot = pendingArchiveUndo else { return }
+        dismissArchiveUndoToast()
+        guard let next = ArchiveTransform.undo(snapshot, in: document) else { return }
+        persistDocument(next, endEditing: false, sync: .debounced)
+    }
+
+    func dismissArchiveUndoToast() {
+        archiveUndoExpireWork?.cancel()
+        archiveUndoExpireWork = nil
+        pendingArchiveUndo = nil
     }
 
     func setCountdownAppearance(_ mode: CountdownAppearanceMode) {
@@ -283,6 +314,7 @@ final class AppCoordinator: NSObject, ObservableObject {
     private func persistDocument(_ document: ContentDocument, endEditing: Bool, sync: ContentSyncTiming) {
         let normalized = ContentDocument(
             todos: BriefingEngine.normalizeTodos(document.todos),
+            archived: BriefingEngine.normalizeArchived(document.archived),
             countdowns: BriefingEngine.normalizeCountdowns(document.countdowns)
         )
         do {
@@ -331,10 +363,27 @@ final class AppCoordinator: NSObject, ObservableObject {
         document = loaded.document
         session.document = loaded.document
         needsSettingsGuide = loaded.needsSettingsGuide
+        if let pending = pendingArchiveUndo, !loaded.document.archived.contains(pending.item) {
+            dismissArchiveUndoToast()
+        }
         if let error = loaded.error {
             lastError = error
             gitStatus = .failed(error)
         }
+    }
+
+    private func beginArchiveUndo(_ snapshot: ArchiveUndoSnapshot) {
+        pendingArchiveUndo = snapshot
+        let token = UUID()
+        archiveUndoToken = token
+        archiveUndoExpireWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.archiveUndoToken == token else { return }
+            self.pendingArchiveUndo = nil
+            self.archiveUndoExpireWork = nil
+        }
+        archiveUndoExpireWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + ArchiveUndoTiming.ringDuration, execute: work)
     }
 
     private func bindChrome() {

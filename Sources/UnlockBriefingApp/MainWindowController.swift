@@ -30,10 +30,12 @@ final class MainWindowController: NSObject, NSWindowDelegate {
     }
 
     func close() {
+        coordinator?.dismissArchiveUndoToast()
         window?.orderOut(nil)
     }
 
     func windowWillClose(_ notification: Notification) {
+        coordinator?.dismissArchiveUndoToast()
         window = nil
     }
 }

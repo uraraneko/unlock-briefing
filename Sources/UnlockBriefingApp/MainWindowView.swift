@@ -9,6 +9,7 @@ struct MainWindowView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var todoIDs: [UUID] = []
     @State private var selectedTodoIndex: Int?
+    @State private var selectedCountdownIndex: Int?
     @State private var draggingTodoIndex: Int?
     @State private var dragTranslation: CGFloat = 0
     @State private var insertionIndex: Int?
@@ -17,24 +18,35 @@ struct MainWindowView: View {
     @FocusState private var focusedTodoID: UUID?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            header
-            if coordinator.needsSettingsGuide {
-                guide
-            } else if coordinator.isEditing {
-                editor
-            } else {
-                viewer
+        ZStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 16) {
+                header
+                if coordinator.needsSettingsGuide {
+                    guide
+                } else if coordinator.isEditing {
+                    editor
+                } else {
+                    viewer
+                }
+                if let error = coordinator.lastError, !error.isEmpty {
+                    Text(error)
+                        .font(.callout)
+                        .foregroundColor(.red)
+                        .textSelection(.enabled)
+                }
+                Spacer(minLength: 0)
             }
-            if let error = coordinator.lastError, !error.isEmpty {
-                Text(error)
-                    .font(.callout)
-                    .foregroundColor(.red)
-                    .textSelection(.enabled)
+            .padding(20)
+
+            if !coordinator.isEditing, let pending = coordinator.pendingArchiveUndo {
+                ArchiveUndoRingView(
+                    label: pending.item.displayText,
+                    onUndo: { coordinator.undoPendingArchive() }
+                )
+                .id(coordinator.archiveUndoToken)
+                .padding(.bottom, 16)
             }
-            Spacer(minLength: 0)
         }
-        .padding(20)
         .frame(minWidth: 480, minHeight: 520)
         .onAppear {
             if coordinator.isEditing && coordinator.editDrafts == .empty && coordinator.document != .empty {
@@ -51,6 +63,8 @@ struct MainWindowView: View {
         .onChange(of: coordinator.isEditing) { _ in
             syncTodoIDs()
             resetTodoDrag()
+            selectedTodoIndex = nil
+            selectedCountdownIndex = nil
         }
         .background(keyboardMoveButtons)
     }
@@ -123,7 +137,12 @@ struct MainWindowView: View {
     }
 
     private var viewer: some View {
-        let presentation = coordinator.briefingPresentation()
+        let now = Date()
+        let presentation = coordinator.briefingPresentation(now: now)
+        let countdownDocIndices = BriefingEngine.documentIndicesForDisplayedCountdowns(
+            coordinator.document.countdowns,
+            now: now
+        )
         return ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 Text(presentation.greetingLine)
@@ -138,13 +157,11 @@ struct MainWindowView: View {
                     if !presentation.countdowns.isEmpty {
                         Text("关键倒计时")
                             .font(.headline)
-                        ForEach(Array(presentation.countdowns.enumerated()), id: \.offset) { _, card in
-                            CountdownCardView(
-                                card: card,
-                                appearance: coordinator.settings.countdownAppearance,
-                                surface: .window,
-                                darkWindow: colorScheme == .dark
-                            )
+                        ForEach(Array(presentation.countdowns.enumerated()), id: \.offset) { displayIndex, card in
+                            let documentIndex = displayIndex < countdownDocIndices.count
+                                ? countdownDocIndices[displayIndex]
+                                : nil
+                            browseCountdownCard(card, documentIndex: documentIndex)
                         }
                     }
                 }
@@ -153,6 +170,30 @@ struct MainWindowView: View {
             .padding(.trailing, 6)
         }
         .scrollDisabled(draggingTodoIndex != nil)
+    }
+
+    private func browseCountdownCard(_ card: CountdownPresentation, documentIndex: Int?) -> some View {
+        let selected = documentIndex.map { selectedCountdownIndex == $0 } ?? false
+        return ZStack(alignment: .topTrailing) {
+            CountdownCardView(
+                card: card,
+                appearance: coordinator.settings.countdownAppearance,
+                surface: .window,
+                darkWindow: colorScheme == .dark,
+                hidesRemainingLabel: selected
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .onTapGesture {
+                toggleCountdownSelection(documentIndex)
+            }
+            if let documentIndex, selected {
+                ArchiveCardButton {
+                    coordinator.archiveCountdown(at: documentIndex)
+                    selectedCountdownIndex = nil
+                    selectedTodoIndex = nil
+                }
+            }
+        }
     }
 
     private var editor: some View {
@@ -304,33 +345,42 @@ struct MainWindowView: View {
         let canDrag = items.count > 1
         return VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(zip(alignedIDs(count: items.count), items).enumerated()), id: \.element.0) { index, pair in
-                TodoCardView(
-                    item: pair.1,
-                    index: index,
-                    total: items.count,
-                    surface: .window,
-                    darkWindow: colorScheme == .dark,
-                    showsHandle: canDrag
-                )
-                .background(todoFrameReader(index))
-                .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .opacity(draggingTodoIndex == index ? 0.55 : 1)
-                .offset(y: draggingTodoIndex == index ? dragTranslation : 0)
-                .zIndex(draggingTodoIndex == index ? 10 : 0)
-                .overlay(alignment: .top) {
-                    if shouldShowInsertion(before: index) {
-                        insertionLine.offset(y: -6)
+                ZStack(alignment: .bottomTrailing) {
+                    TodoCardView(
+                        item: pair.1,
+                        index: index,
+                        total: items.count,
+                        surface: .window,
+                        darkWindow: colorScheme == .dark,
+                        showsHandle: canDrag
+                    )
+                    .background(todoFrameReader(index))
+                    .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .opacity(draggingTodoIndex == index ? 0.55 : 1)
+                    .offset(y: draggingTodoIndex == index ? dragTranslation : 0)
+                    .zIndex(draggingTodoIndex == index ? 10 : 0)
+                    .overlay(alignment: .top) {
+                        if shouldShowInsertion(before: index) {
+                            insertionLine.offset(y: -6)
+                        }
                     }
-                }
-                .overlay(alignment: .bottom) {
-                    if index == items.count - 1, shouldShowInsertion(before: items.count) {
-                        insertionLine.offset(y: 6)
+                    .overlay(alignment: .bottom) {
+                        if index == items.count - 1, shouldShowInsertion(before: items.count) {
+                            insertionLine.offset(y: 6)
+                        }
                     }
-                }
-                .highPriorityGesture(todoDragGesture(index: index, enabled: canDrag))
-                .onTapGesture { selectedTodoIndex = index }
-                .onHover { hovering in
-                    applyDragCursor(hovering && canDrag && draggingTodoIndex == nil)
+                    .highPriorityGesture(todoDragGesture(index: index, enabled: canDrag))
+                    .onTapGesture { toggleTodoSelection(index) }
+                    .onHover { hovering in
+                        applyDragCursor(hovering && canDrag && draggingTodoIndex == nil)
+                    }
+                    if selectedTodoIndex == index {
+                        ArchiveCardButton {
+                            coordinator.archiveTodo(at: index)
+                            selectedTodoIndex = nil
+                            selectedCountdownIndex = nil
+                        }
+                    }
                 }
             }
         }
@@ -487,6 +537,17 @@ struct MainWindowView: View {
             let dest = destination > selected ? destination - 1 : destination
             selectedTodoIndex = dest
         }
+    }
+
+    private func toggleTodoSelection(_ index: Int) {
+        selectedCountdownIndex = nil
+        selectedTodoIndex = selectedTodoIndex == index ? nil : index
+    }
+
+    private func toggleCountdownSelection(_ documentIndex: Int?) {
+        guard let documentIndex else { return }
+        selectedTodoIndex = nil
+        selectedCountdownIndex = selectedCountdownIndex == documentIndex ? nil : documentIndex
     }
 
     private func moveSelected(by offset: Int) {

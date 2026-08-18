@@ -126,15 +126,86 @@ public enum CountdownColorBand: String, Equatable, Sendable {
     case red
 }
 
+public enum ArchivedItem: Equatable, Codable, Sendable {
+    case todo(TodoItem)
+    case countdown(CountdownItem)
+
+    public var displayText: String {
+        switch self {
+        case .todo(let item):
+            return item.text
+        case .countdown(let item):
+            return item.title
+        }
+    }
+
+    public init(from decoder: Decoder) throws {
+        if let text = try? decoder.singleValueContainer().decode(String.self) {
+            self = .todo(TodoItem(text: text, priority: .medium))
+            return
+        }
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let text = try container.decodeIfPresent(String.self, forKey: .text), !text.isEmpty {
+            let raw = try container.decodeIfPresent(String.self, forKey: .priority) ?? ""
+            self = .todo(TodoItem(text: text, priority: TodoPriority(rawValue: raw) ?? .medium))
+            return
+        }
+        if let title = try container.decodeIfPresent(String.self, forKey: .title), !title.isEmpty,
+           let date = try container.decodeIfPresent(String.self, forKey: .date), !date.isEmpty {
+            let start = try container.decodeIfPresent(String.self, forKey: .start)
+            self = .countdown(CountdownItem(title: title, date: date, start: start.flatMap { $0.isEmpty ? nil : $0 }))
+            return
+        }
+        throw DecodingError.dataCorruptedError(
+            forKey: .text,
+            in: container,
+            debugDescription: "archived item is neither a todo nor a countdown"
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        switch self {
+        case .todo(let item):
+            try item.encode(to: encoder)
+        case .countdown(let item):
+            try item.encode(to: encoder)
+        }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case text, priority, title, date, start
+    }
+}
+
 public struct ContentDocument: Equatable, Codable, Sendable {
     public var todos: [TodoItem]
+    public var archived: [ArchivedItem]
     public var countdowns: [CountdownItem]
 
-    public static let empty = ContentDocument(todos: [], countdowns: [])
+    public static let empty = ContentDocument(todos: [], archived: [], countdowns: [])
 
-    public init(todos: [TodoItem], countdowns: [CountdownItem]) {
+    public init(todos: [TodoItem], archived: [ArchivedItem] = [], countdowns: [CountdownItem]) {
         self.todos = todos
+        self.archived = archived
         self.countdowns = countdowns
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        todos = try container.decodeIfPresent([TodoItem].self, forKey: .todos) ?? []
+        archived = try container.decodeIfPresent([ArchivedItem].self, forKey: .archived) ?? []
+        countdowns = try container.decodeIfPresent([CountdownItem].self, forKey: .countdowns) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(todos, forKey: .todos)
+        try container.encode(archived, forKey: .archived)
+        try container.encode(countdowns, forKey: .countdowns)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case todos, archived, countdowns
     }
 }
 

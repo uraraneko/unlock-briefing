@@ -22,6 +22,23 @@ public enum BriefingEngine {
         }
     }
 
+    public static func normalizeArchived(_ list: [ArchivedItem]?) -> [ArchivedItem] {
+        guard let list else { return [] }
+        return list.compactMap { item in
+            switch item {
+            case .todo(let todo):
+                return todo.text.isEmpty ? nil : .todo(todo)
+            case .countdown(let countdown):
+                guard !countdown.title.isEmpty, !countdown.date.isEmpty else { return nil }
+                var next = countdown
+                if let start = next.start, start.isEmpty {
+                    next.start = nil
+                }
+                return .countdown(next)
+            }
+        }
+    }
+
     /// Parse unified `content.json`: `{ "todos": [...], "countdowns": [{title,date,start?}] }`.
     /// Legacy bare string array becomes todos only. String todos become medium priority.
     public static func parseContent(_ raw: String?) -> ContentDocument {
@@ -34,7 +51,7 @@ public enum BriefingEngine {
         }
         if let array = object as? [Any] {
             if let first = array.first, first is String {
-                return ContentDocument(todos: normalizeTodos(todoList(from: array)), countdowns: [])
+                return ContentDocument(todos: normalizeTodos(todoList(from: array)), archived: [], countdowns: [])
             }
             return empty
         }
@@ -43,6 +60,7 @@ public enum BriefingEngine {
         }
         return ContentDocument(
             todos: normalizeTodos(todoList(from: dict["todos"])),
+            archived: normalizeArchived(archivedList(from: dict["archived"])),
             countdowns: normalizeCountdowns(countdownList(from: dict["countdowns"]))
         )
     }
@@ -126,6 +144,20 @@ public enum BriefingEngine {
                 return lhs.0 < rhs.0
             }
             .map(\.1)
+    }
+
+    /// Document indices for the browse/HUD display list (invalid dates omitted).
+    public static func documentIndicesForDisplayedCountdowns(_ items: [CountdownItem], now: Date) -> [Int] {
+        let displayed = sortedCountdownsForDisplay(items, now: now)
+        var used = Set<Int>()
+        var indices: [Int] = []
+        for item in displayed {
+            if let idx = items.indices.first(where: { !used.contains($0) && items[$0] == item }) {
+                used.insert(idx)
+                indices.append(idx)
+            }
+        }
+        return indices
     }
 
     /// Editor rows follow display order; incomplete or invalid items stay at the end.
@@ -399,6 +431,26 @@ public enum BriefingEngine {
             let rawPriority = dict["priority"] as? String ?? ""
             let priority = TodoPriority(rawValue: rawPriority) ?? .medium
             return TodoItem(text: text, priority: priority)
+        }
+    }
+
+    private static func archivedList(from value: Any?) -> [ArchivedItem] {
+        guard let array = value as? [Any] else { return [] }
+        return array.compactMap { item in
+            if let text = item as? String {
+                return text.isEmpty ? nil : .todo(TodoItem(text: text, priority: .medium))
+            }
+            guard let dict = item as? [String: Any] else { return nil }
+            if let text = dict["text"] as? String, !text.isEmpty {
+                let rawPriority = dict["priority"] as? String ?? ""
+                return .todo(TodoItem(text: text, priority: TodoPriority(rawValue: rawPriority) ?? .medium))
+            }
+            if let title = dict["title"] as? String, !title.isEmpty,
+               let date = dict["date"] as? String, !date.isEmpty {
+                let start = (dict["start"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+                return .countdown(CountdownItem(title: title, date: date, start: start))
+            }
+            return nil
         }
     }
 

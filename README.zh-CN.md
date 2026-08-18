@@ -37,6 +37,9 @@
     { "text": "完成报告初稿", "priority": "high" },
     { "text": "回复客户邮件", "priority": "medium" }
   ],
+  "archived": [
+    { "text": "上周已完成的报告", "priority": "medium" }
+  ],
   "countdowns": [
     { "title": "项目上线", "date": "2026-12-31", "start": "2026-08-01" }
   ]

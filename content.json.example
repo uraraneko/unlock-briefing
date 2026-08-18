@@ -4,6 +4,10 @@
     { "text": "回复客户邮件", "priority": "medium" },
     { "text": "整理本周待办", "priority": "low" }
   ],
+  "archived": [
+    { "text": "上周已完成的报告", "priority": "medium" },
+    { "title": "旧里程碑", "date": "2026-07-01", "start": "2026-06-01" }
+  ],
   "countdowns": [
     { "title": "项目上线", "date": "2026-12-31", "start": "2026-08-01" },
     { "title": "生日", "date": "2026-09-15" },

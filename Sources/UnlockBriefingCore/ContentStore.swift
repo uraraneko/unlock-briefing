@@ -21,6 +21,7 @@ public final class ContentStore: @unchecked Sendable {
     public func save(_ document: ContentDocument) throws {
         let payload = ContentDocument(
             todos: BriefingEngine.normalizeTodos(document.todos),
+            archived: BriefingEngine.normalizeArchived(document.archived),
             countdowns: BriefingEngine.normalizeCountdowns(document.countdowns)
         )
         try AtomicJSON.write(payload, to: fileURL, fileManager: fileManager)

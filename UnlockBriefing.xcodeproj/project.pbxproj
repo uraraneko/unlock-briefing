@@ -25,6 +25,9 @@
 		A1000000000000000000004B /* MainWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002B /* MainWindowController.swift */; };
 		A1000000000000000000004C /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002C /* MainWindowView.swift */; };
 		A10000000000000000000057 /* BriefingCardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000037 /* BriefingCardsView.swift */; };
+		A10000000000000000000058 /* ArchiveTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000038 /* ArchiveTransform.swift */; };
+		A10000000000000000000059 /* ArchiveCardButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000039 /* ArchiveCardButton.swift */; };
+		A1000000000000000000005A /* ArchiveUndoRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000003C /* ArchiveUndoRingView.swift */; };
 		A1000000000000000000004D /* SettingsWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002D /* SettingsWindowView.swift */; };
 		A1000000000000000000004E /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002E /* MenuBarController.swift */; };
 		A1000000000000000000004F /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002F /* LoginItemService.swift */; };
@@ -54,6 +57,9 @@
 		A1000000000000000000002B /* MainWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowController.swift; sourceTree = "<group>"; };
 		A1000000000000000000002C /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		A10000000000000000000037 /* BriefingCardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BriefingCardsView.swift; sourceTree = "<group>"; };
+		A10000000000000000000038 /* ArchiveTransform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveTransform.swift; sourceTree = "<group>"; };
+		A10000000000000000000039 /* ArchiveCardButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveCardButton.swift; sourceTree = "<group>"; };
+		A1000000000000000000003C /* ArchiveUndoRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveUndoRingView.swift; sourceTree = "<group>"; };
 		A1000000000000000000002D /* SettingsWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowView.swift; sourceTree = "<group>"; };
 		A1000000000000000000002E /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		A1000000000000000000002F /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
@@ -107,6 +113,7 @@
 			children = (
 				A10000000000000000000020 /* Models.swift */,
 				A10000000000000000000021 /* BriefingEngine.swift */,
+				A10000000000000000000038 /* ArchiveTransform.swift */,
 				A10000000000000000000022 /* AppPaths.swift */,
 				A10000000000000000000023 /* SettingsStore.swift */,
 				A10000000000000000000024 /* ContentStore.swift */,
@@ -130,6 +137,8 @@
 				A1000000000000000000002B /* MainWindowController.swift */,
 				A1000000000000000000002C /* MainWindowView.swift */,
 				A10000000000000000000037 /* BriefingCardsView.swift */,
+				A10000000000000000000039 /* ArchiveCardButton.swift */,
+				A1000000000000000000003C /* ArchiveUndoRingView.swift */,
 				A1000000000000000000002D /* SettingsWindowView.swift */,
 				A1000000000000000000002E /* MenuBarController.swift */,
 				A1000000000000000000002F /* LoginItemService.swift */,
@@ -217,6 +226,7 @@
 			files = (
 				A10000000000000000000040 /* Models.swift in Sources */,
 				A10000000000000000000041 /* BriefingEngine.swift in Sources */,
+				A10000000000000000000058 /* ArchiveTransform.swift in Sources */,
 				A10000000000000000000042 /* AppPaths.swift in Sources */,
 				A10000000000000000000043 /* SettingsStore.swift in Sources */,
 				A10000000000000000000044 /* ContentStore.swift in Sources */,
@@ -234,6 +244,8 @@
 				A1000000000000000000004B /* MainWindowController.swift in Sources */,
 				A1000000000000000000004C /* MainWindowView.swift in Sources */,
 				A10000000000000000000057 /* BriefingCardsView.swift in Sources */,
+				A10000000000000000000059 /* ArchiveCardButton.swift in Sources */,
+				A1000000000000000000005A /* ArchiveUndoRingView.swift in Sources */,
 				A1000000000000000000004D /* SettingsWindowView.swift in Sources */,
 				A1000000000000000000004E /* MenuBarController.swift in Sources */,
 				A1000000000000000000004F /* LoginItemService.swift in Sources */,

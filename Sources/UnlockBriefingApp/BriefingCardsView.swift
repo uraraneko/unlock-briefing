@@ -146,6 +146,7 @@ struct CountdownCardView: View {
     let appearance: CountdownAppearanceMode
     let surface: CardSurface
     var darkWindow: Bool = false
+    var hidesRemainingLabel: Bool = false
 
     var body: some View {
         let content = VStack(alignment: .leading, spacing: 4) {
@@ -153,8 +154,10 @@ struct CountdownCardView: View {
                 Text(card.item.title)
                     .font(surface == .hud ? .custom("PingFang SC", size: 16).weight(.medium) : .headline)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(card.remainingLabel)
-                    .font(.subheadline.weight(.semibold))
+                if !hidesRemainingLabel {
+                    Text(card.remainingLabel)
+                        .font(.subheadline.weight(.semibold))
+                }
             }
             Text(card.item.date)
                 .font(.caption)
