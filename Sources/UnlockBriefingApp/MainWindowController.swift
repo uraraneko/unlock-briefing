@@ -49,7 +49,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             let window = NSWindow(contentViewController: host)
             window.title = "设置"
             window.styleMask = [.titled, .closable]
-            window.setContentSize(NSSize(width: 460, height: 280))
+            window.setContentSize(NSSize(width: 520, height: 420))
             window.isReleasedWhenClosed = false
             window.delegate = self
             self.window = window

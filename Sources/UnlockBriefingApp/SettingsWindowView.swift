@@ -10,6 +10,8 @@ struct SettingsWindowView: View {
     @State private var repoURL: String = ""
     @State private var showMenuBar = true
     @State private var launchAtLogin = false
+    @State private var appearance: CountdownAppearanceMode = .remainingDays
+    @State private var preset: CountdownUrgencyPreset = .standard
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -32,6 +34,30 @@ struct SettingsWindowView: View {
             }
             Toggle("开机时启动", isOn: $launchAtLogin)
             Toggle("在菜单栏显示图标", isOn: $showMenuBar)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("倒计时外观")
+                    .font(.headline)
+                Picker("倒计时外观", selection: $appearance) {
+                    ForEach(CountdownAppearanceMode.allCases, id: \.self) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                Text("关上色不会隐藏「还剩 x 天」文字。按剩余天数与进度填充互斥，不会叠在同一张卡上。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                if appearance == .remainingDays {
+                    Picker("紧急度预设", selection: $preset) {
+                        ForEach(CountdownUrgencyPreset.allCases, id: \.self) { item in
+                            Text("\(item.displayName)（\(item.cutsCaption)）").tag(item)
+                        }
+                    }
+                    .labelsHidden()
+                }
+            }
+
             HStack {
                 Button("保存") { save() }
                     .keyboardShortcut(.defaultAction)
@@ -41,11 +67,13 @@ struct SettingsWindowView: View {
             Spacer(minLength: 0)
         }
         .padding(20)
-        .frame(width: 460, height: 280)
+        .frame(width: 520, height: 420)
         .onAppear {
             repoURL = coordinator.settings.repoURL
             showMenuBar = coordinator.settings.showMenuBar
             launchAtLogin = coordinator.settings.launchAtLogin
+            appearance = coordinator.settings.countdownAppearance
+            preset = coordinator.settings.countdownUrgencyPreset
         }
     }
 
@@ -77,6 +105,8 @@ struct SettingsWindowView: View {
         if showMenuBar != coordinator.settings.showMenuBar {
             coordinator.setShowMenuBar(showMenuBar)
         }
+        coordinator.setCountdownAppearance(appearance)
+        coordinator.setCountdownUrgencyPreset(preset)
         coordinator.saveRepoURL(repoURL)
         coordinator.closeSettings()
     }

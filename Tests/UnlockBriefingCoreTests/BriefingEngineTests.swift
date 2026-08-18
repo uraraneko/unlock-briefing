@@ -15,7 +15,8 @@ final class BriefingEngineTests: XCTestCase {
         """
         let content = BriefingEngine.parseContent(raw)
         XCTAssertEqual(content.todos.count, 2, "parses two todos from content.json shape")
-        XCTAssertEqual(content.todos[0], "完成报告初稿", "first todo text")
+        XCTAssertEqual(content.todos[0].text, "完成报告初稿", "first todo text")
+        XCTAssertEqual(content.todos[0].priority, .medium, "legacy string todo is medium")
         XCTAssertEqual(content.countdowns.count, 2, "parses two countdowns")
         XCTAssertEqual(content.countdowns[0].title, "项目上线", "countdown title")
         XCTAssertEqual(content.countdowns[0].date, "2026-08-20", "countdown date")
@@ -26,15 +27,16 @@ final class BriefingEngineTests: XCTestCase {
 
         let legacy = BriefingEngine.parseContent("[\"a\", \"b\"]")
         XCTAssertEqual(legacy.todos.count, 2, "legacy array -> todos")
-        XCTAssertEqual(legacy.todos, ["a", "b"])
+        XCTAssertEqual(legacy.todos.map(\.text), ["a", "b"])
+        XCTAssertEqual(legacy.todos.map(\.priority), [.medium, .medium])
         XCTAssertEqual(legacy.countdowns.count, 0, "legacy array -> no countdowns")
     }
 
     func testParseTodosLegacy() {
         let todos = BriefingEngine.parseTodos("[\"完成报告初稿\", \"回复客户邮件\"]")
         XCTAssertEqual(todos.count, 2, "parses two todos")
-        XCTAssertEqual(todos[0], "完成报告初稿", "first todo text")
-        XCTAssertEqual(todos[1], "回复客户邮件", "second todo text")
+        XCTAssertEqual(todos[0].text, "完成报告初稿", "first todo text")
+        XCTAssertEqual(todos[1].text, "回复客户邮件", "second todo text")
 
         XCTAssertEqual(BriefingEngine.parseTodos(nil).count, 0, "nil content -> empty")
         XCTAssertEqual(BriefingEngine.parseTodos("").count, 0, "empty content -> empty")
@@ -138,7 +140,7 @@ final class BriefingEngineTests: XCTestCase {
         let exampleRaw = try RepoFixtures.read("content.json.example")
         let example = BriefingEngine.parseContent(exampleRaw)
         XCTAssertGreaterThanOrEqual(example.todos.count, 1, "demo content has at least one todo")
-        XCTAssertEqual(example.todos[0], "完成报告初稿", "demo first todo")
+        XCTAssertEqual(example.todos[0].text, "完成报告初稿", "demo first todo")
         XCTAssertGreaterThanOrEqual(example.countdowns.count, 1, "demo content has countdowns")
 
         let now = RepoFixtures.localDate(year: 2026, month: 8, day: 5, hour: 12)
@@ -150,7 +152,7 @@ final class BriefingEngineTests: XCTestCase {
             let liveRaw = try String(contentsOf: contentURL, encoding: .utf8)
             let live = BriefingEngine.parseContent(liveRaw)
             XCTAssertFalse(live.todos.isEmpty && live.countdowns.isEmpty, "content.json shape parses")
-            XCTAssertEqual(live.todos.first, "完成报告初稿")
+            XCTAssertEqual(live.todos.first?.text, "完成报告初稿")
         }
 
         XCTAssertEqual(AppSettings.default.showDuration, 8, "config showDuration default 8")

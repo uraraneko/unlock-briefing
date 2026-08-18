@@ -23,8 +23,17 @@ final class AppCoordinator: NSObject, ObservableObject {
     private let menuBar = MenuBarController()
     private let mainWindow = MainWindowController()
     private let settingsWindow = SettingsWindowController()
+    static let browseReorderSyncDelay: TimeInterval = 3
+
     private let gitQueue = DispatchQueue(label: "com.chenenci.UnlockBriefing.git")
     private var unlockWork: DispatchWorkItem?
+    private var pendingSyncWork: DispatchWorkItem?
+    private var syncQueued = false
+
+    private enum ContentSyncTiming {
+        case immediate
+        case debounced
+    }
 
     override init() {
         let paths = AppPaths.default()
@@ -91,7 +100,7 @@ final class AppCoordinator: NSObject, ObservableObject {
 
     func saveEdits() {
         session.editDrafts = editDrafts
-        saveDocument(session.documentForSave())
+        persistDocument(session.documentForSave(), endEditing: true)
     }
 
     func openSettings() {
@@ -136,25 +145,42 @@ final class AppCoordinator: NSObject, ObservableObject {
     }
 
     func saveDocument(_ document: ContentDocument) {
-        do {
-            try git.saveContent(document)
-            self.document = document
-            session.document = document
-            session.cancelEditing()
-            lastError = nil
-            publishSession()
-            if settings.autoSyncOnToggle, !trimmedRepoURL.isEmpty {
-                startBackgroundSync()
-            }
-        } catch {
-            lastError = "写入 content.json 失败：\(error.localizedDescription)"
+        persistDocument(document, endEditing: true)
+    }
+
+    func persistDocument(_ document: ContentDocument, endEditing: Bool) {
+        persistDocument(document, endEditing: endEditing, sync: .immediate)
+    }
+
+    func reorderTodos(from source: IndexSet, to destination: Int) {
+        if isEditing {
+            editDrafts.todos.move(fromOffsets: source, toOffset: destination)
+            return
         }
+        var next = document
+        next.todos.move(fromOffsets: source, toOffset: destination)
+        persistDocument(next, endEditing: false, sync: .debounced)
+    }
+
+    func setCountdownAppearance(_ mode: CountdownAppearanceMode) {
+        settings.countdownAppearance = mode
+        persistSettings()
+    }
+
+    func setCountdownUrgencyPreset(_ preset: CountdownUrgencyPreset) {
+        settings.countdownUrgencyPreset = preset
+        persistSettings()
     }
 
     func startBackgroundSync() {
+        cancelPendingSync()
         let snapshot = settings
         if trimmedRepoURL.isEmpty {
             gitStatus = .idle
+            return
+        }
+        if gitStatus == .syncing {
+            syncQueued = true
             return
         }
         gitStatus = .syncing
@@ -169,6 +195,10 @@ final class AppCoordinator: NSObject, ObservableObject {
                     self.lastError = nil
                     let loaded = self.git.loadContent(settings: self.settings)
                     self.applyLoad(loaded)
+                }
+                if self.syncQueued {
+                    self.syncQueued = false
+                    self.startBackgroundSync()
                 }
             }
         }
@@ -201,7 +231,15 @@ final class AppCoordinator: NSObject, ObservableObject {
     var briefingText: String {
         let now = Date()
         let lines = BriefingEngine.getCountdowns(document.countdowns, now: now)
-        return BriefingEngine.buildMessage(todos: document.todos, countdowns: lines, now: now)
+        return BriefingEngine.buildMessage(todos: document.todos.map(\.text), countdowns: lines, now: now)
+    }
+
+    func briefingPresentation(now: Date = Date()) -> BriefingPresentation {
+        BriefingEngine.presentation(
+            document: document,
+            now: now,
+            preset: settings.countdownUrgencyPreset
+        )
     }
 
     @objc private func handleScreenUnlocked(_ notification: Notification) {
@@ -231,11 +269,57 @@ final class AppCoordinator: NSObject, ObservableObject {
             return
         }
         let duration = settings.showDuration > 0 ? settings.showDuration : 8
-        hud.show(text: briefingText, duration: duration) { [weak self] in
+        hud.show(
+            presentation: briefingPresentation(),
+            appearance: settings.countdownAppearance,
+            duration: duration
+        ) { [weak self] in
             self?.openMainWindow(editing: true)
         }
         settings.lastShownDate = today
         persistSettings()
+    }
+
+    private func persistDocument(_ document: ContentDocument, endEditing: Bool, sync: ContentSyncTiming) {
+        let normalized = ContentDocument(
+            todos: BriefingEngine.normalizeTodos(document.todos),
+            countdowns: BriefingEngine.normalizeCountdowns(document.countdowns)
+        )
+        do {
+            try git.saveContent(normalized)
+            self.document = normalized
+            session.document = normalized
+            if endEditing {
+                session.cancelEditing()
+            }
+            lastError = nil
+            publishSession()
+            guard settings.autoSyncOnToggle, !trimmedRepoURL.isEmpty else { return }
+            switch sync {
+            case .immediate:
+                startBackgroundSync()
+            case .debounced:
+                scheduleDebouncedSync()
+            }
+        } catch {
+            lastError = "写入 content.json 失败：\(error.localizedDescription)"
+        }
+    }
+
+    private func scheduleDebouncedSync() {
+        cancelPendingSync()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.pendingSyncWork = nil
+            self.startBackgroundSync()
+        }
+        pendingSyncWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.browseReorderSyncDelay, execute: work)
+    }
+
+    private func cancelPendingSync() {
+        pendingSyncWork?.cancel()
+        pendingSyncWork = nil
     }
 
     private func publishSession() {

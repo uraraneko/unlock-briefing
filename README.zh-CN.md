@@ -33,9 +33,12 @@
 
 ```json
 {
-  "todos": ["完成报告初稿", "回复客户邮件"],
+  "todos": [
+    { "text": "完成报告初稿", "priority": "high" },
+    { "text": "回复客户邮件", "priority": "medium" }
+  ],
   "countdowns": [
-    { "title": "项目上线", "date": "2026-12-31" }
+    { "title": "项目上线", "date": "2026-12-31", "start": "2026-08-01" }
   ]
 }
 ```

@@ -68,16 +68,16 @@ final class GitContentTests: XCTestCase {
         settings.repoURL = remote.absoluteString
 
         var loaded = service.loadContent(settings: settings)
-        XCTAssertEqual(loaded.document.todos.first, "完成报告初稿")
+        XCTAssertEqual(loaded.document.todos.first?.text, "完成报告初稿")
 
         var edited = loaded.document
-        edited.todos.append("新待办")
+        edited.todos.append(TodoItem(text: "新待办"))
         edited.countdowns.append(CountdownItem(title: "发布会", date: "2027-01-01"))
         try service.saveContent(edited)
 
         let disk = try String(contentsOf: paths.contentFile, encoding: .utf8)
         let parsed = BriefingEngine.parseContent(disk)
-        XCTAssertTrue(parsed.todos.contains("新待办"), "edit writes content.json")
+        XCTAssertTrue(parsed.todos.contains { $0.text == "新待办" }, "edit writes content.json")
         XCTAssertEqual(parsed.countdowns.last?.title, "发布会")
 
         let stamp = RepoFixtures.localDate(year: 2026, month: 8, day: 15, hour: 16, minute: 19, second: 0)
@@ -100,11 +100,11 @@ final class GitContentTests: XCTestCase {
             encoding: .utf8
         )
         let remoteDoc = BriefingEngine.parseContent(remoteContent)
-        XCTAssertTrue(remoteDoc.todos.contains("新待办"))
+        XCTAssertTrue(remoteDoc.todos.contains { $0.text == "新待办" })
         XCTAssertEqual(remoteDoc.countdowns.last?.date, "2027-01-01")
 
         loaded = service.loadContent(settings: settings)
-        XCTAssertEqual(loaded.document.todos.last, "新待办")
+        XCTAssertEqual(loaded.document.todos.last?.text, "新待办")
     }
 
     func testPullRebasePicksUpRemoteEdit() throws {
@@ -120,7 +120,7 @@ final class GitContentTests: XCTestCase {
         let otherDir = tempRoot.appendingPathComponent("other-clone")
         _ = try git(["clone", remote.path, otherDir.path])
         var otherDoc = fixture
-        otherDoc.todos = ["远端待办"]
+        otherDoc.todos = [TodoItem(text: "远端待办")]
         try ContentStore(fileURL: otherDir.appendingPathComponent("content.json")).save(otherDoc)
         _ = try git(["-C", otherDir.path, "add", "-A"])
         _ = try git([
@@ -134,7 +134,7 @@ final class GitContentTests: XCTestCase {
         let pulled = first.sync(settings: settings)
         XCTAssertEqual(pulled, .synced, String(describing: pulled))
         let after = first.loadContent(settings: settings)
-        XCTAssertEqual(after.document.todos, ["远端待办"])
+        XCTAssertEqual(after.document.todos.map(\.text), ["远端待办"])
     }
 
     func testSettingsPersistRepoURLAndMenuBarDefault() throws {
@@ -144,14 +144,20 @@ final class GitContentTests: XCTestCase {
         XCTAssertTrue(settings.showMenuBar)
         XCTAssertEqual(settings.unlockDelay, 0.8)
         XCTAssertEqual(settings.showDuration, 8)
+        XCTAssertEqual(settings.countdownAppearance, .remainingDays)
+        XCTAssertEqual(settings.countdownUrgencyPreset, .standard)
         settings.repoURL = "git@example.com:user/data.git"
         settings.showMenuBar = false
         settings.launchAtLogin = true
+        settings.countdownAppearance = .progressFill
+        settings.countdownUrgencyPreset = .tight
         try service.saveSettings(settings)
         let loaded = service.loadSettings()
         XCTAssertEqual(loaded.repoURL, "git@example.com:user/data.git")
         XCTAssertFalse(loaded.showMenuBar)
         XCTAssertTrue(loaded.launchAtLogin)
+        XCTAssertEqual(loaded.countdownAppearance, .progressFill)
+        XCTAssertEqual(loaded.countdownUrgencyPreset, .tight)
     }
 
     func testDoesNotReadHammerspoonOrSeedFiles() throws {
@@ -173,7 +179,7 @@ final class GitContentTests: XCTestCase {
 
         XCTAssertTrue(loaded.needsSettingsGuide)
         XCTAssertEqual(loaded.document, .empty)
-        XCTAssertFalse(loaded.document.todos.contains("来自Hammerspoon"))
+        XCTAssertFalse(loaded.document.todos.contains { $0.text == "来自Hammerspoon" })
         XCTAssertFalse(paths.supportDirectory.path.contains(".hammerspoon"))
         XCTAssertFalse(paths.contentFile.path.contains(".hammerspoon"))
         XCTAssertTrue(recorder.calls.isEmpty)

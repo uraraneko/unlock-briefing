@@ -33,8 +33,11 @@ Edit in the main window (**Edit**), or change `content.json` in the data repo:
 
 ```json
 {
-  "todos": ["Draft the report", "Reply to email"],
-  "countdowns": [{ "title": "Launch", "date": "2026-12-31" }]
+  "todos": [
+    { "text": "Draft the report", "priority": "high" },
+    { "text": "Reply to email", "priority": "medium" }
+  ],
+  "countdowns": [{ "title": "Launch", "date": "2026-12-31", "start": "2026-08-01" }]
 }
 ```
 

@@ -1,11 +1,11 @@
 {
   "todos": [
-    "完成报告初稿",
-    "回复客户邮件",
-    "整理本周待办"
+    { "text": "完成报告初稿", "priority": "high" },
+    { "text": "回复客户邮件", "priority": "medium" },
+    { "text": "整理本周待办", "priority": "low" }
   ],
   "countdowns": [
-    { "title": "项目上线", "date": "2026-12-31" },
+    { "title": "项目上线", "date": "2026-12-31", "start": "2026-08-01" },
     { "title": "生日", "date": "2026-09-15" },
     { "title": "考试", "date": "2026-10-10" }
   ]

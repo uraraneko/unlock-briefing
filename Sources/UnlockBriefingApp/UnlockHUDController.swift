@@ -10,7 +10,12 @@ final class UnlockHUDController {
     private var hideWork: DispatchWorkItem?
     private var onEdit: (() -> Void)?
 
-    func show(text: String, duration: TimeInterval, onEdit: @escaping () -> Void) {
+    func show(
+        presentation: BriefingPresentation,
+        appearance: CountdownAppearanceMode,
+        duration: TimeInterval,
+        onEdit: @escaping () -> Void
+    ) {
         hide()
         self.onEdit = onEdit
 
@@ -32,16 +37,25 @@ final class UnlockHUDController {
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
 
-        let host = NSHostingView(rootView: HUDCard(text: text, onEdit: { [weak self] in
-            self?.hide()
-            onEdit()
-        }))
+        let maxHeight = (NSScreen.main?.visibleFrame.height ?? 800) * 0.7
+        let host = NSHostingView(rootView: HUDCard(
+            presentation: presentation,
+            appearance: appearance,
+            maxHeight: maxHeight,
+            onEdit: { [weak self] in
+                self?.hide()
+                onEdit()
+            }
+        ))
         host.frame = NSRect(x: 0, y: 0, width: 460, height: 320)
         host.autoresizingMask = [.width, .height]
         panel.contentView = host
         let fitting = host.fittingSize
         var frame = panel.frame
-        frame.size = NSSize(width: max(420, fitting.width), height: max(120, fitting.height))
+        frame.size = NSSize(
+            width: max(420, fitting.width),
+            height: min(maxHeight, max(120, fitting.height))
+        )
         if let screen = NSScreen.main {
             let visible = screen.visibleFrame
             frame.origin.x = visible.midX - frame.width / 2
@@ -72,15 +86,28 @@ final class UnlockHUDController {
 }
 
 private struct HUDCard: View {
-    let text: String
+    let presentation: BriefingPresentation
+    let appearance: CountdownAppearanceMode
+    let maxHeight: CGFloat
     let onEdit: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(text)
-                .font(.custom("PingFang SC", size: 18))
-                .foregroundColor(.white)
-                .fixedSize(horizontal: false, vertical: true)
+            ViewThatFits(in: .vertical) {
+                BriefingSectionsView(
+                    presentation: presentation,
+                    appearance: appearance,
+                    surface: .hud
+                )
+                ScrollView {
+                    BriefingSectionsView(
+                        presentation: presentation,
+                        appearance: appearance,
+                        surface: .hud
+                    )
+                }
+            }
+            .frame(maxHeight: maxHeight - 64)
             HStack {
                 Spacer()
                 Button("编辑", action: onEdit)

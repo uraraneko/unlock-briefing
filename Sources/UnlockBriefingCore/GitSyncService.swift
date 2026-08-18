@@ -73,6 +73,11 @@ public final class GitSyncService: @unchecked Sendable {
             status = .failed(error)
             return status
         }
+        // Pick up writes that landed after the first commit (e.g. another browse drag).
+        if let error = commitIfDirty(now: now) {
+            status = .failed(error)
+            return status
+        }
         if let error = pullRebase() {
             status = .failed(error)
             return status
